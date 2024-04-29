@@ -1,0 +1,36 @@
+/**
+ * Generalized helper methods for UDDL
+ */
+import 'platform:/plugin/com.epistimis.uddl.query/model/generated/Query.ecore'
+
+package query
+
+ context QueryStatement
+    /*
+     * Helper method that determines if a string is a UDDL Query grammar keyword
+     * 
+     * In same order as XText grammar file.
+     */
+    static def: isGrammarKeyword(str : String) : Boolean =
+      let strLower: String = str.toLowerCase() in
+        strLower = 'all' or
+        strLower = 'some' or
+        strLower = 'any' or
+        strLower = 'exists' or
+        strLower = 'not' or
+        strLower = 'in' or
+        strLower = 'select' or
+        strLower = 'and' or
+        strLower = 'or' or
+        strLower = 'as' or
+        strLower = 'distinct' or
+        strLower = 'from' or
+        strLower = 'where' or
+        strLower = 'by' or
+        strLower = 'join' or
+        strLower = 'on' or
+        strLower = 'order' or
+        strLower = 'asc' or
+        strLower = 'desc' 
+          
+ endpackage

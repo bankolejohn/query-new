@@ -1,0 +1,31 @@
+Manifest-Version: 1.0
+Automatic-Module-Name: com.epistimis.uddl.query.ui
+Bundle-ManifestVersion: 2
+Bundle-Name: com.epistimis.uddl.query.ui
+Bundle-Vendor: Epistimis LLC
+Bundle-Version: 1.0.0.qualifier
+Bundle-SymbolicName: com.epistimis.uddl.query.ui; singleton:=true
+Bundle-ActivationPolicy: lazy
+Require-Bundle: com.epistimis.uddl.query,
+ com.epistimis.uddl.query.ide,
+ org.eclipse.xtext.ui,
+ org.eclipse.xtext.ui.shared,
+ org.eclipse.xtext.ui.codetemplates.ui,
+ org.eclipse.ui.editors;bundle-version="3.14.300",
+ org.eclipse.ui.ide;bundle-version="3.18.500",
+ org.eclipse.jdt.core,
+ org.eclipse.xtend.lib,
+ org.eclipse.ui,
+ org.eclipse.core.runtime,
+ org.eclipse.compare,
+ org.eclipse.xtext.builder,
+ org.eclipse.core.resources,
+ org.eclipse.pde.core,
+ org.eclipse.ui.forms
+Import-Package: org.apache.log4j
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Export-Package: com.epistimis.uddl.query.ui.internal,
+ com.epistimis.uddl.query.ui.contentassist,
+ com.epistimis.uddl.query.ui.quickfix,
+ com.epistimis.uddl.query.ui.wizard
+Bundle-Activator: com.epistimis.uddl.query.ui.internal.QueryActivator

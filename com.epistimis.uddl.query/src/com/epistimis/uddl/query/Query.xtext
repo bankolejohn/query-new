@@ -1,0 +1,413 @@
+grammar com.epistimis.uddl.query.Query with org.eclipse.xtext.common.Terminals
+
+generate query "http://www.epistimis.com/uddl/query/Query"
+
+
+/**
+ * https://stackoverflow.com/questions/30889847/match-string-in-xtext-regardless-of-upper-lower-case (second, more recent response) indicates how
+ * to get case insensitive keywords. But this means that they must be keywords, not Terminals. 
+ * TODO: replace Replace grammar terminals keywords with literal keywords. What impact does this have on Langium?
+ * 
+ * BooleanPredicate is not LL. See book for how to handle this. This modification is because the original grammar is ANTLR 4, but XText only 
+ * supports ANTLR 3.
+ */
+
+
+/**
+A QuerySpecification represents a Query in the Data Model.
+*/
+QuerySpecification : QueryStatement ;
+
+/**
+	A QueryStatement is the expression of a Query, which is a declaration of a set of data in terms of a set of Entities and their 
+	Characteristics. The SelectedEntityExpression defines the context for a QueryStatement's data set as a set of related Entities 
+	and optionally a set of conditions expressed over their Characteristics that are true for all data in the data set. 
+	The ProjectedCharacteristicList identifies the specific Characteristics that are the elements of the QueryStatement's data set. 
+	The SetQualifier DISTINCT, if specified, indicates that instances of data in the data set are not duplicated. Otherwise, 
+	they may be duplicated.
+* 
+* 	Optionally followed by a semicolon
+*
+*/
+//QueryStatement : KW_SELECT , [ SetQualifier ] , ProjectedCharacteristicList , SelectedEntityExpression ;
+QueryStatement : KW_SELECT ( qualifier=SetQualifier )? projectedCharacteristicList=ProjectedCharacteristicList  
+	selectedEntityExpression=SelectedEntityExpression ';'?
+;
+
+
+
+/**
+A SetQualifier indicates whether instances of data in a set are unique (KW_DISTINCT) or not (KW_ALL).
+*/
+SetQualifier : KW_DISTINCT | KW_ALL ;
+
+/**
+	A ProjectedCharacteristicList defines the set of Characteristics in a QueryStatement. ALL_CHARACTERISTICS indicates that every 
+	Characteristic of every SelectedEntity is included. Otherwise, the Characteristics are those specified by the 
+	projected_characteristic_expressions. In both cases, only those Characteristics whose types are not Entities are included.
+*/
+ProjectedCharacteristicList : all=ALL_CHARACTERISTICS | characteristic+=ProjectedCharacteristicExpression  ( COMMA  characteristic+=ProjectedCharacteristicExpression )* ;
+
+/**
+	ALL_CHARACTERISTICS is a shorthand notation indicating "every Characteristic".
+*/
+terminal ALL_CHARACTERISTICS : "*" ;
+
+/**
+	A ProjectedCharacteristicExpression represents one or more Characteristics of a specific Entity.
+*/
+ProjectedCharacteristicExpression : SelectedEntityCharacteristicWildcardReference | ExplicitSelectedEntityCharacteristicReference ;
+
+/**
+	A SelectedEntityCharacteristicWildcardReference is a shorthand notation indicating "every Characteristic of SelectedEntityReference".
+*/
+SelectedEntityCharacteristicWildcardReference : selectedEntity=SelectedEntityReference  PERIOD  ALL_CHARACTERISTICS ;
+
+/**
+	An ExplicitSelectedEntityCharacteristicReference represents one Characteristic of one Entity. ProjectedCharacteristicAlias specifies an optional alias for the 
+	Characteristic for use elsewhere in a QueryStatement.
+*/
+ExplicitSelectedEntityCharacteristicReference : selectedEntityCharacteristicReference=SelectedEntityCharacteristicReference  ( ( KW_AS )?  projectedCharacteristicAlias=ProjectedCharacteristicAlias )? ;
+
+/**
+	A SelectedEntityExpression defines the context for a QueryStatement's data set as a set of related Entities (using the FromClause). It may also specify a set of 
+	conditions expressed over Characteristics of those Entities that are true for all data in the data set (using a WhereClause) and specify how data in the data set is 
+	ordered (using an OrderByClause).
+*/
+SelectedEntityExpression : from=FromClause  ( where=WhereClause )?  ( orderBy=OrderByClause )? ;
+
+/**	
+	A FromClause identifies a set of related Entities via EntityExpression.
+*/
+FromClause : KW_FROM  entity=EntityExpression ;
+
+/**
+	An EntityExpression identifies a set of Entities and a set of relationships between those Entities. The set of Entities are the selected_entitys in the EntityExpression. 
+	The set of relationships are identified by the entity_type_characteristic_equivalence_expressions in the EntityExpression.
+*/
+//EntityExpression : selectedEntity=SelectedEntity , { EntityJoinExpression } ;
+EntityExpression : selectedEntity=SelectedEntity  (eje+=EntityJoinExpression)*  ;
+
+/**
+	A SelectedEntity is the Entity whose name is EntityTypeReference. SelectedEntityAlias specifies an alias for the Entity for use elsewhere in a QueryStatement.
+*/
+SelectedEntity : entityType=EntityTypeReference  ( ( KW_AS )?  selectedEntityAlias=SelectedEntityAlias )? ;
+
+/**
+	An EntityJoinExpression identifies an Entity (JoinEntity) and one or more relationships between it and other selected_entitys in the EntityExpression. 
+	Each relationship is identified with an EntityTypeCharacteristicEquivalenceExpression whose SelectedEntityCharacteristicReference is either a Characteristic of JoinEntity whose type is another SelectedEntity, or is a Characteristic of another SelectedEntity whose type is JoinEntity.
+*/
+EntityJoinExpression : KW_JOIN  joinEntity=JoinEntity  KW_ON  entityJoinCriteria=EntityJoinCriteria ;
+
+/**
+	A JoinEntity is a SelectedEntity in an EntityJoinExpression.
+*/
+JoinEntity : SelectedEntity ;
+
+/**
+	An EntityJoinCriteria identifies one or more relationships between two or more selected_entitys in the EntityExpression. Each EntityTypeCharacteristicEquivalenceExpression 
+	identifies a relationship between two selected_entitys.
+*/
+EntityJoinCriteria : etcee+=EntityTypeCharacteristicEquivalenceExpression  ( KW_AND  etcee+=EntityTypeCharacteristicEquivalenceExpression )* ;
+
+/**
+	An EntityTypeCharacteristicEquivalenceExpression identifies a relationship between two selected_entitys. SelectedEntityCharacteristicReference is a Characteristic of one 
+	SelectedEntity whose type is the another SelectedEntity in the EntityExpression. A SelectedEntityReference is used to identify a specific SelectedEntity should there be 
+	more than one SelectedEntity whose type is that Characteristic's type.
+*/
+EntityTypeCharacteristicEquivalenceExpression : secr=SelectedEntityCharacteristicReference  ( EQUALS_OPERATOR  selectedEntity=SelectedEntityReference )? ;
+
+/**
+	A SelectedEntityCharacteristicReference is a SelectedEntity's Characteristic specified by CharacteristicReference. 
+	A SelectedEntityReference is used to identify a specific SelectedEntity should there be more than one Characteristic 
+	whose name is CharacteristicReference.
+*/
+SelectedEntityCharacteristicReference : ( selectedEntity=SelectedEntityReference  PERIOD )?  characteristic=CharacteristicReference ;
+
+/**
+	A SelectedEntityReference is a reference by name to a SelectedEntity, where QueryIdentifier is either a SelectedEntity's 
+	EntityTypeReference or its SelectedEntityAlias.
+*/
+SelectedEntityReference : QueryIdentifier ;
+
+/**
+	A WhereClause specifies a set of conditions that are true for all data in the QueryStatement's data set.
+*/
+
+
+WhereClause : KW_WHERE  criteria=Criteria ;
+
+/**
+	A Criteria specifies a set of conditions expressed over Characteristics of selected_entitys via BooleanExpression.
+*/
+Criteria : BooleanExpression ;
+
+/**
+	An OrderByClause specifies how data in the QueryStatement's data set is ordered. The data set is initially ordered by the first OrderingExpression's 
+	ProjectedCharacteristicReference. Each additional OrderingExpression further orders the data set.
+*/
+OrderByClause : KW_ORDER  KW_BY  orderingExpression+=OrderingExpression  ( COMMA  orderingExpression+=OrderingExpression )* ;
+
+/**
+	An OrderingExpression specifies a Characteristic in the ProjectedCharacteristicList used to order data in the QueryStatement's data set. If OrderingType DESC is 
+	specified, it indicates that data is ordered descending. Otherwise, it is ordered ascending.
+*/
+OrderingExpression : characteristic=ProjectedCharacteristicReference  (orderingType=OrderingType)? ;
+
+/**
+	A ProjectedCharacteristicReference is a reference to a Characteristic in the ProjectedCharacteristicList.
+*/
+ProjectedCharacteristicReference : QualifiedProjectedCharacteristicReference |  UnqualifiedProjectedCharacteristicReferenceOrAlias ;
+
+/**
+	A QualifiedProjectedCharacteristicReference is a Characteristic specified by CharacteristicReference in the Entity specified by SelectedEntityReference.
+*/
+QualifiedProjectedCharacteristicReference : selectedEntityReference=SelectedEntityReference PERIOD  characteristic=CharacteristicReference ;
+
+/**
+	An UnqualifiedProjectedCharacteristicReferenceOrAlias is a Characteristic in ProjectedCharacteristicList whose rolename 
+	or assigned ProjectedCharacteristicAlias is QueryIdentifier. If QueryIdentifier happens to match both a 
+	ProjectedCharacteristicAlias and a rolename, then the Characteristic associated with the ProjectedCharacteristicAlias 
+	is assumed.
+*/
+UnqualifiedProjectedCharacteristicReferenceOrAlias : QueryIdentifier ;
+
+/**
+	An OrderingType specifies whether data is ordered ascending (KW_ASC) or descending (KW_DESC).
+*/
+OrderingType : KW_ASC | KW_DESC ;
+
+
+/**
+ * 	Boolean expressions are left recursive. To address this, see the book p 169 
+ */
+ 
+
+/**	
+	A BooleanExpression is a boolean OR expression over boolean_terms.
+*/
+BooleanExpression : term+=BooleanTerm  ( KW_OR  term+=BooleanTerm )* ;
+
+/**
+	A BooleanTerm is a boolean AND expression over boolean_factors.
+*/
+BooleanTerm : factor+=BooleanFactor  ( KW_AND  factor+=BooleanFactor )* ;
+
+/**
+	A BooleanFactor is a BooleanPredicate. If KW_NOT is not present, it evaluates the same as BooleanPredicate. If KW_NOT is present, the evaluation is the same but negated.
+*/
+BooleanFactor :  (not?=KW_NOT)?  pred=BooleanPredicate ;
+
+
+/**
+ * 	NOTE: The problem with BooleanPredicate is when more than one of 	ScalarComparePredicate | SetComparePredicate | SetMembershipPredicate  is uncommented.
+ * 	This results in a non LL grammar. Search for syntactic predicates in the book.
+ * 
+ * TODO: fix this when we need set membership or set comparison capability
+ */
+/**
+	A BooleanPredicate is a predicate.
+*/
+BooleanPredicate : 
+	ScalarComparePredicate | 
+//	SetComparePredicate | 
+//	SetMembershipPredicate | 
+	ExistsPredicate | 
+	LEFT_PAREN  BooleanExpression  RIGHT_PAREN
+;
+
+/**
+	A ScalarComparePredicate is a function that compares two PredicateTerms. It evaluates to TRUE if the comparison is true, FALSE otherwise.
+*/
+ScalarComparePredicate : left=PredicateTerm op=CompareOperator right=PredicateTerm ;
+
+/**
+	A SetMembershipPredicate is a function that checks a PredicateTerm for membership in a LogicalSet. If KW_NOT is not present, it evaluates to TRUE if PredicateTerm 
+	is a member of LogicalSet, FALSE otherwise. If KW_NOT is present, the evaluation is the same but negated.
+*/
+SetMembershipPredicate : left=PredicateTerm  ( not?=KW_NOT)?  KW_IN  set=LogicalSet ;
+
+/**
+	A LogicalSet is a set of data. If LogicalSet is a Subquery with one Characteristic in its ProjectedCharacteristicList, the set is the data associated with that 
+	Characteristic. If LogicalSet is a CharacteristicBasisSet, the set is the data associated with each CharacteristicBasis. If LogicalSet is an EnumLiteralSet, the set 
+	is the specified EnumerationLabels.
+*/
+LogicalSet : Subquery | CharacteristicBasisSet | EnumLiteralSet ;
+
+/**
+	A CharacteristicBasisSet is one or more CharacteristicBasis.
+*/
+CharacteristicBasisSet : LEFT_PAREN  characteristicBasis+=CharacteristicBasis  ( COMMA  characteristicBasis+=CharacteristicBasis)*  RIGHT_PAREN ;
+
+/**	
+	A SetComparePredicate is a function that represents a pair-wise comparison of PredicateTerm with all members of CompareSet. 
+	If SetCompareQuantifier is KW_ALL, the function evaluates to TRUE if the application of CompareOperator evaluates to TRUE 
+	for PredicateTerm and every member of the set, FALSE otherwise. If SetCompareQuantifier is KW_SOME, the function evaluates to 
+	TRUE if the application of CompareOperator evaluates to TRUE for PredicateTerm and at least one member in the set, FALSE otherwise.
+*/
+SetComparePredicate : pred=PredicateTerm  op=CompareOperator quantifier=SetCompareQuantifier set=CompareSet ;
+
+/**
+	A CompareSet is a Subquery with a single Characteristic in its ProjectedCharacteristicList.
+*/
+CompareSet : Subquery ;
+
+/**
+	A CompareOperator is a boolean comparison operator.
+*/
+CompareOperator : EQUALS_OPERATOR | NOT_EQUALS_OPERATOR | 
+				  LESS_THAN_OPERATOR | GREATER_THAN_OPERATOR | LESS_THAN_OR_EQUALS_OPERATOR | GREATER_THAN_OR_EQUALS_OPERATOR
+;
+
+/**
+	A SetCompareQuantifier indicates that a comparison applies to every (KW_ALL) or any (KW_SOME) member of a set.
+*/
+SetCompareQuantifier : KW_ALL | KW_SOME ;
+
+/**
+	An ExistsPredicate is a function that evaluates to TRUE if there is any data associated with the single Characteristic in Subquery's ProjectedCharacteristicList, 
+	FALSE otherwise.
+*/
+ExistsPredicate : KW_EXISTS  sub=Subquery ;
+
+/**
+	A PredicateTerm represents a DataModel Element whose associated data is scalar.
+*/
+PredicateTerm : CharacteristicBasis | EnumLiteralReferenceExpression ;
+
+/**
+	A CharacteristicBasis is a Characteristic whose associated data is scalar. If CharacteristicBasis is a 
+	Subquery with one Characteristic in its ProjectedCharacteristicList, then the CharacteristicBasis is that Characteristic. 
+	Otherwise, the Characteristic is specified by SelectedEntityCharacteristicReference.
+*/
+CharacteristicBasis : SelectedEntityCharacteristicReference | Subquery ;
+
+/**
+	A Subquery is a QueryStatement that is nested inside another QueryStatement.
+*/
+
+Subquery : LEFT_PAREN  query=QueryStatement  RIGHT_PAREN ;
+
+/**
+	A CharacteristicReference is a Characteristic whose rolename matches QueryIdentifier.
+*/
+CharacteristicReference : QueryIdentifier ;
+
+/**
+	An EntityTypeReference is the Entity whose name matches QueryIdentifier.
+*/
+EntityTypeReference : QueryIdentifier ;
+
+/**
+	An EnumLiteralSet is a set of EnumerationLabels. Each member in the set is identified by the EnumerationLabel whose name is EnumerationLiteralReference in the Enumerated whose name is EnumerationTypeReference.
+*/
+EnumLiteralSet : LEFT_BRACE type=EnumerationTypeReference COLON  literal+=EnumerationLiteralReference  ( COMMA  literal+=EnumerationLiteralReference )* RIGHT_BRACE ;
+
+/**
+	An EnumLiteralReferenceExpression is an EnumerationLabel whose name is EnumerationLiteralReference in the Enumerated whose name is EnumerationTypeReference.
+*/
+EnumLiteralReferenceExpression : LEFT_BRACE  typ=EnumerationTypeReference  COLON  literal=EnumerationLiteralReference RIGHT_BRACE ;
+
+/**
+	An EnumerationTypeReference is the Enumerated whose name matches QueryIdentifier.
+*/
+EnumerationTypeReference : QueryIdentifier ;
+
+/**
+	An EnumerationLiteralReference is an EnumerationLabel whose name matches QueryIdentifier.
+*/
+EnumerationLiteralReference : QueryIdentifier ;
+
+/**
+	A SelectedEntityAlias is an alias for a SelectedEntity.
+*/
+SelectedEntityAlias : QueryIdentifier ;
+
+/**
+	A ProjectedCharacteristicAlias provides an alias for a Characteristic in a ProjectedCharacteristicList.
+*/
+ProjectedCharacteristicAlias : QueryIdentifier ;
+
+/**
+	A QueryIdentifier is an alphanumeric string used to represent an Identifier in a QuerySpecification.
+*/
+QueryIdentifier : id=IDENTIFIER ; // ID ; // These are identical - and if they aren't, they should be
+
+/**
+* 	The following terms start with kw_ to indicate that they are keyword tokens.
+* 	Note that some rules have been modified to recognize any mix of case.
+* 	TODO: Is this desirable? Either all should be this way, or none. When we start using this grammar to edit the queries
+* 	this will become obvious.
+*/
+terminal KW_ALL : ('A'|'a')('L'|'l')('L'|'l'); // "ALL" | "all" ;
+terminal KW_SOME : ('S'|'s')('O'|'o')('M'|'m')('E'|'e') | ('A'|'a')('N'|'n')('Y'|'y'); //  "SOME" | "some" | "ANY" | "any" ;
+terminal KW_EXISTS : "EXISTS" | "exists" ;
+
+terminal KW_NOT : "NOT" | "not" ;
+terminal KW_IN : "IN" | "in" ;
+terminal KW_SELECT :  "SELECT" | "select"; // | //('S'|'s')('E'|'e')('L'|'l')('E'|'e')('C'|'c')('T'|'t');
+terminal KW_AND : "AND" | "and" ;
+terminal KW_OR : "OR" | "or" ;
+terminal KW_AS : "AS" | "as" ;
+terminal KW_DISTINCT : "DISTINCT" | "distinct" ;
+terminal KW_FROM : "FROM" | "from" ;
+terminal KW_WHERE : "WHERE" | "where" ;
+terminal KW_BY : "BY" | "by" ;
+terminal KW_JOIN : "JOIN" | "join" ;
+terminal KW_ON : "ON" | "on" ;
+terminal KW_ORDER : "ORDER" | "order" ;
+terminal KW_ASC : "ASC" | "asc" ;
+terminal KW_DESC : "DESC" | "desc" ;
+
+/**
+	The following terms represent boolean operator tokens.
+*/
+
+/**
+	An EQUALS_OPERATOR is the boolean equals operator.
+*/
+terminal EQUALS_OPERATOR : "=" ;
+
+/**
+	A NOT_EQUALS_OPERATOR is the boolean not equals operator.
+*/
+terminal NOT_EQUALS_OPERATOR : "<>" | "!:" ;
+
+/**
+	A LESS_THAN_OPERATOR is the boolean less-than operator.
+*/
+terminal LESS_THAN_OPERATOR : "<" ;
+
+/**
+	A GREATER_THAN_OPERATOR is the boolean greater-than operator.
+*/
+terminal GREATER_THAN_OPERATOR : ">" ;
+
+/**
+	A GREATER_THAN_OR_EQUALS_OPERATOR is the boolean greater-than-or-equals operator.
+*/
+terminal GREATER_THAN_OR_EQUALS_OPERATOR : ">:" ;
+
+/**
+	A LESS_THAN_OR_EQUALS_OPERATOR is the boolean less-than-or-equals operator.
+*/
+terminal LESS_THAN_OR_EQUALS_OPERATOR : "<:" ;
+
+/**
+	The following terms represent punctuation tokens.
+*/
+terminal COMMA : "," ;
+terminal LEFT_PAREN : "(" ;
+terminal RIGHT_PAREN : ")" ;
+terminal PERIOD : "." ; 
+terminal LEFT_BRACE : "{" ;
+terminal RIGHT_BRACE : "}" ;
+terminal COLON : ":" ;
+
+/**
+	The following terms represent Identifier tokens.
+*/
+terminal IDENTIFIER : LETTER  ( LETTER | DIGITAL_LITERAL)* ;
+terminal LETTER : "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" | "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" | "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" | "_" ;
+terminal DIGITAL_LITERAL : "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+	

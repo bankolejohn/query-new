@@ -1,0 +1,33 @@
+Manifest-Version: 1.0
+Automatic-Module-Name: com.epistimis.uddl.query
+Bundle-ManifestVersion: 2
+Bundle-Name: com.epistimis.uddl.query
+Bundle-Vendor: Epistimis LLC
+Bundle-Version: 1.0.0.qualifier
+Bundle-SymbolicName: com.epistimis.uddl.query; singleton:=true
+Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.xtext,
+ org.eclipse.xtext.xbase,
+ org.eclipse.equinox.common;bundle-version="3.16.0",
+ org.eclipse.emf.ecore,
+ org.eclipse.xtext.xbase.lib;bundle-version="2.14.0",
+ org.eclipse.xtext.util,
+ org.eclipse.emf.common,
+ org.antlr.runtime;bundle-version="[3.2.0,3.2.1)",
+ com.epistimis.xtextdocs.xtext;bundle-version="1.1.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-17
+Export-Package: com.epistimis.uddl.query.validation,
+ com.epistimis.uddl.query.scoping,
+ com.epistimis.uddl.query.parser.antlr.lexer,
+ com.epistimis.uddl.query.query,
+ com.epistimis.uddl.query.parser.antlr.internal,
+ com.epistimis.uddl.query.formatting2,
+ com.epistimis.uddl.query,
+ com.epistimis.uddl.query.services,
+ com.epistimis.uddl.query.generator,
+ com.epistimis.uddl.query.query.impl,
+ com.epistimis.uddl.query.parser.antlr,
+ com.epistimis.uddl.query.serializer,
+ com.epistimis.uddl.query.query.util
+Import-Package: org.apache.log4j,
+ org.eclipse.jdt.annotation

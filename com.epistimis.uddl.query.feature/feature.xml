@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<feature id="com.epistimis.uddl.query.feature"
+	label="Query Feature "
+      version="1.0.0.qualifier"
+      provider-name="Epistimis LLC">
+
+   <description>
+      Support for UDDL Queries.
+   </description>
+	<plugin
+			id="com.epistimis.uddl.query"
+			download-size="0"
+			install-size="0"
+			version="0.0.0"
+			unpack="false"/>
+	<plugin
+			id="com.epistimis.uddl.query.ide"
+			download-size="0"
+			install-size="0"
+			version="0.0.0"
+			unpack="false"/>
+	<plugin
+			id="com.epistimis.uddl.query.ui"
+			download-size="0"
+			install-size="0"
+			version="0.0.0"
+			unpack="false"/>
+
+   <plugin
+         id="org.apache.log4j"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+</feature>

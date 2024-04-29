@@ -1,0 +1,18 @@
+import  '../../../../../../model/generated/Query.ecore'
+
+
+/**
+ * TODO: As long as uddl has a dependency on uddl.query (which it does as of 2023-01-01), then this cannot have a dependency on uddl (circular dependency problem).
+ *  So this can only provide helper methods that uddl or face ocl can use
+ */
+ 
+package query
+
+  context QueryStatement
+  	    /*
+	     * Helper method that drills down through the query to get the entity type name
+	     */
+	    def: referencedEntityType() : String =
+	        self.selectedEntityExpression.from.entity.selectedEntity.entityType.oclAsType(QueryIdentifier).id
+
+endpackage
