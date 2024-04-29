@@ -29,7 +29,7 @@ pipeline {
              credentialsId: 'your_github_credentials_id', // Replace with actual ID
              url: 'https://github.com/bankolejohn/uddl-new.git'
 
-        // Build and install the project using Maven
+        // Build and install the project using Maven 
         sh "${tool 'Maven'}/bin/mvn clean install -Djava.version=17"
       }
     }
