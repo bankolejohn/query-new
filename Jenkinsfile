@@ -9,6 +9,17 @@ pipeline {
 
   // Define stages for your build
   stages {
+    // Checkout stage 0 (xtext dependencies)
+    stage('Checkout Stage 0') {
+      steps {
+        // Use Git SCM plugin to checkout the first repository
+        git branch: 'master',
+             url: 'https://github.com/bankolejohn/xtext-docs-gen.git'
+
+        // Build and install the project using Maven
+        sh "${tool 'Maven'}/bin/mvn clean install -Djava.version=17"
+      }
+    }
     // Checkout stage 1 (main project)
     stage('Checkout Stage 1') {
       steps {
