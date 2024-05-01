@@ -9,8 +9,19 @@ pipeline {
 
   // Define stages for your build
   stages {
+    // Checkout stage  (face template)
+    stage('Checkout Stage FACE-TEMPLATE') {
+      steps {
+        // Use Git SCM plugin to checkout the first repository
+        git branch: 'main',
+             url: 'https://github.com/bankolejohn/face-template.git'
+
+        // Build and install the project using Maven
+        sh "${tool 'Maven'}/bin/mvn clean install -Djava.version=17"
+      }
+    }
     // Checkout stage 0 (xtext dependencies)
-    stage('Checkout Stage 0') {
+    stage('Checkout Stage XTEXT') {
       steps {
         // Use Git SCM plugin to checkout the first repository
         git branch: 'master',
@@ -21,7 +32,7 @@ pipeline {
       }
     }
     // Checkout stage 1 (main project)
-    stage('Checkout Stage 1') {
+    stage('Checkout Stage 1 - uddl-query') {
       steps {
         // Use Git SCM plugin to checkout the first repository
         git branch: 'main',
@@ -33,7 +44,7 @@ pipeline {
     }
 
     // Checkout stage 2 (dependent project)
-    stage('Checkout Stage 2') {
+    stage('Checkout Stage 2 - uddl') {
       steps {
         // Use Git SCM plugin to checkout the second repository
         git branch: 'main',
@@ -46,7 +57,7 @@ pipeline {
     }
 
     // Checkout stage 3 (dependent project - FACE) - Improved naming
-    stage('Checkout Stage 3 - FACE Project') { // Clearer stage name
+    stage('Checkout Stage 3 - FACE') { // Clearer stage name
       steps {
         git branch: 'main',
              url: 'https://github.com/bankolejohn/face-new'
